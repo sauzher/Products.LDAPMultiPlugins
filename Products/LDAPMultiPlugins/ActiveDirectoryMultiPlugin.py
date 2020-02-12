@@ -18,7 +18,7 @@ $Id$
 from ldap.filter import filter_format
 import logging
 import os
-from urllib import quote_plus
+from urllib.parse import quote_plus
 
 from Acquisition import aq_base
 from App.class_init import default__class_init__ as InitializeClass
@@ -34,7 +34,7 @@ from Products.PluggableAuthService.interfaces.plugins import \
      IRoleEnumerationPlugin
 from Products.PluggableAuthService.utils import classImplements
 
-from LDAPPluginBase import LDAPPluginBase
+from .LDAPPluginBase import LDAPPluginBase
 
 
 logger = logging.getLogger('event.LDAPMultiPlugin')
@@ -51,7 +51,7 @@ def manage_addActiveDirectoryMultiPlugin( self, id, title, LDAP_server
                              , REQUEST=None
                              ):
     """ Factory method to instantiate a ActiveDirectoryMultiPlugin """
-    # Make sure we really are working in our container (the 
+    # Make sure we really are working in our container (the
     # PluggableAuthService object)
     self = self.this()
 
@@ -99,7 +99,7 @@ def manage_addActiveDirectoryMultiPlugin( self, id, title, LDAP_server
                    , encryption=encryption
                    , read_only=read_only
                    , REQUEST=None
-                   )              
+                   )
 
     # clean out the __allow_groups__ bit because it is not needed here
     # and potentially harmful
@@ -156,7 +156,7 @@ class ActiveDirectoryMultiPlugin(LDAPPluginBase):
     group_recurse_depth = 1
 
     def __init__(self, id, title='', groupid_attr='objectGUID',
-                 grouptitle_attr='cn', group_class='group', group_recurse=1, 
+                 grouptitle_attr='cn', group_class='group', group_recurse=1,
                  group_recurse_depth=1):
         """ Initialize a new instance """
         self.id = id
@@ -261,12 +261,12 @@ class ActiveDirectoryMultiPlugin(LDAPPluginBase):
 
         for result in ldap_results:
             dn = result['dn']
-            
+
             if seen.has_key(dn):
                 continue
             temp.append(result)
             seen[dn] = 1
-            
+
             if result.has_key('memberOf'):
                 for parent_dn in result['memberOf']:
                     filt = filter_format('(distinguishedName=%s)', (parent_dn,))
@@ -289,7 +289,7 @@ class ActiveDirectoryMultiPlugin(LDAPPluginBase):
                              groups_base, acl.groups_scope, filt,
                              R['exception'])
             else:
-                if depth < self.group_recurse_depth:    
+                if depth < self.group_recurse_depth:
                     self._recurseGroups(R['results'], temp, seen, depth + 1)
 
         return temp
@@ -316,7 +316,7 @@ class ActiveDirectoryMultiPlugin(LDAPPluginBase):
         if cached_info is not None:
             logger.debug('returning cached results from enumerateUsers')
             return cached_info
-        
+
         result = []
         acl = self._getLDAPUserFolder()
         login_attr = acl.getProperty('_login_attr')
@@ -342,7 +342,7 @@ class ActiveDirectoryMultiPlugin(LDAPPluginBase):
                 ldap_user = acl.getUser(login)
             else:
                 msg = 'Exact Match specified but no ID or Login given'
-                raise ValueError, msg
+                raise ValueError(msg)
 
             if ldap_user is not None:
                 qs = 'user_dn=%s' % quote_plus(ldap_user.getUserDN())
@@ -351,7 +351,7 @@ class ActiveDirectoryMultiPlugin(LDAPPluginBase):
                                , 'pluginid' : plugin_id
                                , 'title': ldap_user.getProperty(login_attr)
                                , 'editurl' : '%s?%s' % (edit_url, qs)
-                               } ) 
+                               } )
         elif id or login or kw:
             l_results = []
             seen = []
@@ -436,10 +436,10 @@ class ActiveDirectoryMultiPlugin(LDAPPluginBase):
             return ()
 
         if id is None and exact_match != 0:
-            raise ValueError, 'Exact Match requested but no id provided'
+            raise ValueError('Exact Match requested but no id provided')
         elif id is None:
             id = ''
-            
+
         plugin_id = self.getId()
 
         filt = ['(objectClass=%s)' % self.group_class]

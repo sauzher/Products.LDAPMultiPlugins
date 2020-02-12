@@ -45,14 +45,13 @@ class LDAPPluginBase(Folder, BasePlugin, Cacheable):
     """ Base class for LDAP-based PAS plugins """
     security = ClassSecurityInfo()
 
-    manage_options = ( BasePlugin.manage_options[:1]
-                     + Folder.manage_options [:1]
-                     + Folder.manage_options[2:]
-                     + Cacheable.manage_options
-                     )
+    manage_options = (BasePlugin.manage_options[:1]
+                      + Folder.manage_options[:1]
+                      + Folder.manage_options[2:]
+                      + Cacheable.manage_options
+                      )
 
     _properties = BasePlugin._properties + Folder._properties
-
 
     # default 'id' attribute for groups
     groupid_attr = 'cn'
@@ -62,16 +61,16 @@ class LDAPPluginBase(Folder, BasePlugin, Cacheable):
         self.id = id
         self.title = title
 
-
     security.declarePrivate('_getLDAPUserFolder')
+
     def _getLDAPUserFolder(self):
         """ Safely retrieve a LDAPUserFolder to work with """
         embedded_luf = getattr(aq_base(self), 'acl_users', None)
 
         return embedded_luf
 
-
     security.declarePrivate('authenticateCredentials')
+
     def authenticateCredentials(self, credentials):
         """ Fulfill AuthenticationPlugin requirements """
         acl = self._getLDAPUserFolder()
@@ -88,8 +87,8 @@ class LDAPPluginBase(Folder, BasePlugin, Cacheable):
 
         return (user.getId(), user.getUserName())
 
-
     security.declarePrivate('resetCredentials')
+
     def resetCredentials(self, request, response):
         """ Fulfill CredentialsResetPlugin requirements """
         user = getSecurityManager().getUser()
@@ -98,8 +97,8 @@ class LDAPPluginBase(Folder, BasePlugin, Cacheable):
         if user:
             acl._expireUser(user)
 
-
     security.declarePrivate('getPropertiesForUser')
+
     def getPropertiesForUser(self, user, request=None):
         """ Fullfill PropertiesPlugin requirements """
         acl = self._getLDAPUserFolder()
@@ -127,8 +126,8 @@ class LDAPPluginBase(Folder, BasePlugin, Cacheable):
 
         return properties
 
-
     security.declarePrivate('getRolesForPrincipal')
+
     def getRolesForPrincipal(self, user, request=None):
         """ Fullfill RolesPlugin requirements """
         acl = self._getLDAPUserFolder()
@@ -142,7 +141,7 @@ class LDAPPluginBase(Folder, BasePlugin, Cacheable):
 
         ldap_user = acl.getUserById(unmangled_userid)
         if ldap_user is None:
-            return ()  
+            return ()
 
         groups = self.getGroupsForPrincipal(user, request)
         roles = list(acl._mapRoles(groups))
@@ -150,11 +149,11 @@ class LDAPPluginBase(Folder, BasePlugin, Cacheable):
 
         return tuple(roles)
 
-
     security.declarePrivate('_demangle')
+
     def _demangle(self, princid):
         # Sanity check
-        if not isinstance(princid, basestring):
+        if not isinstance(princid, str):
             return None
 
         # User must start with our prefix (which is likely to be blank anyway)
@@ -164,17 +163,19 @@ class LDAPPluginBase(Folder, BasePlugin, Cacheable):
 
     # Helper methods for simple group caching
     security.declarePrivate('_getGroupInfoCacheKey')
+
     def _getGroupInfoCacheKey(self, gid):
         """_getGroupInfoCacheKey(id) -> (view_name, keywords)
 
-        given a group id, return view_name and keywords to be used when 
+        given a group id, return view_name and keywords to be used when
         querying and storing into the group cache
         """
         view_name = self.getId() + '__GroupInfoCache'
-        keywords = { 'id' : gid }
+        keywords = {'id': gid}
         return view_name, keywords
 
     security.declarePrivate('_setGroupInfoCache')
+
     def _setGroupInfoCache(self, info):
         """Cache a group info"""
         gid = info['id']
@@ -182,6 +183,7 @@ class LDAPPluginBase(Folder, BasePlugin, Cacheable):
         self.ZCacheable_set(info, view_name=view_name, keywords=keywords)
 
     security.declarePrivate('_getGroupInfoCache')
+
     def _getGroupInfoCache(self, gid, default=None):
         """Retrieve a group info from cache, given its group id.
 
@@ -189,19 +191,12 @@ class LDAPPluginBase(Folder, BasePlugin, Cacheable):
         has no group with such id
         """
         view_name, keywords = self._getGroupInfoCacheKey(gid)
-        result = self.ZCacheable_get( view_name=view_name
-                                    , keywords=keywords
-                                    , default=default
-                                    )
+        result = self.ZCacheable_get(view_name=view_name, keywords=keywords, default=default
+                                     )
         return result
 
 
-classImplements( LDAPPluginBase
-               , IAuthenticationPlugin
-               , ICredentialsResetPlugin
-               , IPropertiesPlugin
-               , IRolesPlugin
-               , ILDAPMultiPlugin
-               )
+classImplements(LDAPPluginBase, IAuthenticationPlugin, ICredentialsResetPlugin, IPropertiesPlugin, IRolesPlugin, ILDAPMultiPlugin
+                )
 
 InitializeClass(LDAPPluginBase)
